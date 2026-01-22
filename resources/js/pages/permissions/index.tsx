@@ -1,3 +1,4 @@
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -24,8 +25,9 @@ import {
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { Dialog, DialogTitle } from '@radix-ui/react-dialog';
+import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -38,6 +40,20 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Permissions() {
     const [openAddPermissionDialog, setOpenAddPermissionDialog] =
         useState(false);
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        id: 0,
+        name: '',
+    });
+
+    function submit(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        post('/permissions', {
+            onSuccess: () => {
+                reset('name');
+            },
+        });
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -112,30 +128,35 @@ export default function Permissions() {
                             <DialogTitle>Add Permission</DialogTitle>
                         </DialogHeader>
                         <hr />
-                        <form>
+                        <form onSubmit={submit}>
                             <div className="grid gap-4">
                                 <div className="grid gap-3">
                                     <Label htmlFor="name">Name</Label>
                                     <Input
                                         id="name"
-                                        name="name"
                                         type="text"
-                                        defaultValue=""
+                                        value={data.name}
+                                        onChange={(e) =>
+                                            setData('name', e.target.value)
+                                        }
+                                        aria-invalid={!!errors.name}
                                     />
+                                    <InputError message={errors.name} />
                                 </div>
                             </div>
-                            <DialogFooter className='mt-4'>
+                            <DialogFooter className="mt-4">
                                 <DialogClose asChild>
                                     <Button variant="outline">Cancel</Button>
                                 </DialogClose>
-                                <Button type="submit">
-                                    <span>Save changes</span>
-                                </Button>
+                               <Button type="submit" disabled={processing}>
+									{processing && <Loader2 className="animate-spin" />}
+									<span>Save Changes</span>
+								</Button>
                             </DialogFooter>
                         </form>
                     </DialogContent>
                 </Dialog>
-                 {/* add new permission dialog end  */}
+                {/* add new permission dialog end  */}
             </div>
         </AppLayout>
     );
